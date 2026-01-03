@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Our Universe Journey 🚀</title>
+    <link href="https://fonts.googleapis.com/css2?family=Mali:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        :root { --sky: #090A0F; --grass: #2d5a27; }
+        body, html { margin: 0; padding: 0; font-family: 'Mali', cursive; background: var(--sky); color: white; overflow: hidden; }
+
+        /* --- Animations --- */
+        @keyframes shake {
+            0%, 100% { transform: translate(-50%, -50%); }
+            20% { transform: translate(-52%, -51%) rotate(-1deg); }
+            40% { transform: translate(-48%, -49%) rotate(1deg); }
+            60% { transform: translate(-51%, -52%) rotate(-1deg); }
+            80% { transform: translate(-49%, -48%) rotate(1deg); }
+        }
+        @keyframes launchUp {
+            0% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+            100% { transform: translate(-50%, -150vh) scale(0.5); opacity: 0; }
+        }
+        @keyframes flyInRight {
+            0% { transform: translate(-150vw, -50%) scale(0.5); opacity: 0; }
+            100% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+        }
+        @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-20px); } }
+        
+        /* CSS ดาวหางแบบโค้ด */
+        @keyframes cometLaunch {
+            0% { transform: translate(0, 0) rotate(-20deg); opacity: 0; }
+            10% { opacity: 1; }
+            100% { transform: translate(-150vw, 50vh) rotate(-20deg); opacity: 0; }
+        }
+
+        /* --- Styles --- */
+        .scene { height: 100vh; width: 100vw; display: none; flex-direction: column; align-items: center; justify-content: center; text-align: center; position: relative; }
+        .active { display: flex; }
+
+        #scene1 { background: linear-gradient(to bottom, #1B2735 60%, var(--grass) 60%); }
+        .stars { position: absolute; top: 0; width: 100%; height: 60%; background: url('https://www.transparenttextures.com/patterns/stardust.png'); opacity: 0.5; }
+
+        #ship-container { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 1000; display: none; }
+        .ship-img { width: 100px; }
+        .shaking { animation: shake 0.2s infinite; }
+        .launching { animation: launchUp 1.5s forwards ease-in; }
+        .entering { animation: flyInRight 1.5s forwards ease-out; }
+        .floating { animation: float 3s ease-in-out infinite; }
+
+        .quiz-box, .msg-box { background: rgba(255,255,255,0.1); backdrop-filter: blur(10px); padding: 25px; border-radius: 20px; width: 85%; max-width: 450px; border: 1px solid rgba(255,255,255,0.3); z-index: 10; }
+        .progress-container { width: 100%; background: #333; height: 15px; border-radius: 10px; margin-bottom: 20px; overflow: hidden; }
+        .progress-bar { height: 100%; background: #00d4ff; width: 0%; transition: 0.5s; }
+        .choice-btn { display: block; width: 100%; background: white; color: #333; border: none; padding: 10px; margin: 10px 0; border-radius: 12px; cursor: pointer; font-family: 'Mali'; font-weight: bold; }
+        
+        .planet { width: 250px; margin-bottom: 20px; animation: float 4s ease-in-out infinite; }
+        .evidence-img { max-width: 90%; max-height: 50vh; border: 4px solid white; border-radius: 15px; margin-bottom: 15px; }
+
+        /* ตัวดาวหาง CSS */
+        #comet { position: absolute; width: 4px; height: 4px; background: white; border-radius: 50%; box-shadow: 0 0 20px 4px white; z-index: 2000; right: -200px; top: 20%; opacity: 0; }
+        #comet::after { content: ''; position: absolute; width: 150px; height: 2px; background: linear-gradient(to left, white, transparent); right: 0; top: 50%; transform: translateY(-50%); }
+        .comet-active { animation: cometLaunch 3s ease-out forwards; }
+    </style>
+</head>
+<body>
+
+    <div id="player"></div>
+
+    <div id="scene1" class="scene active">
+        <div class="stars"></div>
+        <img src="telescope.png" style="width:150px; cursor:pointer;" onclick="startLaunch()">
+        <p style="margin-top:20px;">กดที่กล้องเพื่อดูดาว</p>
+    </div>
+
+    <div id="ship-container">
+        <img src="spaceship.png" id="main-ship" class="ship-img">
+    </div>
+
+    <div id="scene-moon" class="scene">
+        <img src="moon.png" class="planet">
+        <div id="quiz-ui" class="quiz-box">
+            <div class="progress-container"><div id="bar" class="progress-bar"></div></div>
+            <div id="question-area">
+                <p>Click เพื่อรับภารกิจสำรวจดวงจันทร์</p>
+                <button class="choice-btn" onclick="loadNextQuestion()">รับภารกิจ</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="scene-jupiter" class="scene">
+        <img src="jupiter.png" id="jupiter-planet" class="planet">
+        <div id="jupiter-content" class="quiz-box">
+            <h3 id="j-title">เจอหลักฐานสำคัญ!</h3>
+            <img id="evidence-display" class="evidence-img" style="display:none;">
+            <p id="j-caption"></p>
+            <button class="choice-btn" id="j-btn" onclick="handleJupiter()">แตะเพื่อสำรวจ</button>
+        </div>
+    </div>
+
+    <div id="scene-saturn" class="scene">
+        <img src="saturn.png" class="planet">
+        <div class="msg-box">
+            <p style="font-size: 0.9rem;">ครบรอบเจ็ดเดือนแบ้วน้ะแฟน หนูรักแฟนมาก ๆ เลยนะ ขอให้ปีนี้เป็นตลอดทั้งปีที่ดี พักผ่อนเย้อ เย้อ ไม่หักโหม ไม่เหนื่อยมากน้ะแฟน ยิ้มเย้อเย้อ มีแต่อะไรดีดีเข้ามาเย้อเย้อเบย อันนี้หนูตั้งใจมากเลยนะ ทั้งตั้งแต่วันที่สอง ขอให้แฟนอยุ่กะบหนุนาน ๆ เบย ❤️</p>
+            <button class="choice-btn" onclick="finalLaunch()">แตะเพื่อไปต่อ</button>
+        </div>
+    </div>
+
+    <div id="scene-end" class="scene">
+        <img src="earth.png" style="width:200px; margin-bottom: 50px;">
+        <div id="comet"></div> 
+        <h1>กลับถึงโลกแล้วนะ..</h1>
+        <p>ดูนั่นสิ! ดาวหางฮัลเลย์พุ่งมาพอดีเลย</p>
+    </div>
+
+    <script>
+        let currentQ = 0; let score = 0; let currentEvidence = 0;
+        const questions = [
+            { q: "เราเจอกันครั้งแรกวันที่เท่าไหร่?", a: ["28 กุมภาพันธ์ 2568", "20 พฤษภาคม 2568", "28 มีนาคม 2568", "18 มกราคม 2568"], c: 0 },
+            { q: "หนูเกิดวันที่เท่าไหร่ เดือนอะไร ปีอะไร?", a: ["9 กันยายน 2553", "9 กันยายน 2552", "9 กันยายน 2554", "9 มกราคม 2552"], c: 0 },
+            { q: "โครงการห้องเรียนพิเศษที่หนูเรียนอยู่ สะกดยังไง?", a: ["G - MATH", "G - MATHS", "G - MATHSS", "G - MATHSSS"], c: 1, desc: "เฉลยคือ G - MATHS: เพราะรุ่นที่ 1 และ 2 ใช้ G - MATH แต่รุ่นหนู (รุ่น 3) เพิ่ม Science เข้ามา เลยมีตัว S เพิ่มมาจ้า!" },
+            { q: "พอดแคสต์ที่หนูชอบฟัง?", a: ["the ghost radio", "อวกาศคาดไม่ถึง", "ทฤษฎีสมทบคิด (พี่เผือก)", "ความ (ไม่) รู้รอบตัว"], c: 1 },
+            { q: "ชื่อ IG หนู สะกดยังไง?", a: ["sun_folwerrrr", "sun_folwerrr", "sun_.f0lwerrr", "sun_.f0lwerrrr"], c: 3 }
+        ];
+
+        var player;
+        function onYouTubeIframeAPIReady() {
+            player = new YT.Player('player', { height: '0', width: '0', videoId: 'kdgRgJ478OY' });
+        }
+        var tag = document.createElement('script'); tag.src = "https://www.youtube.com/iframe_api";
+        var firstScriptTag = document.getElementsByTagName('script')[0]; firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
+
+        function startLaunch() {
+            player.playVideo();
+            const shipContainer = document.getElementById('ship-container');
+            const ship = document.getElementById('main-ship');
+            shipContainer.style.display = 'block';
+            ship.classList.add('shaking');
+            setTimeout(() => {
+                ship.classList.replace('shaking', 'launching');
+                setTimeout(() => {
+                    changeScene('scene1', 'scene-moon');
+                    ship.classList.replace('launching', 'entering');
+                    setTimeout(() => { ship.classList.replace('entering', 'floating'); }, 1500);
+                }, 1400);
+            }, 1000);
+        }
+
+        function loadNextQuestion() {
+            if (currentQ < 5) {
+                let q = questions[currentQ];
+                let btns = q.a.map((ans, i) => `<button class="choice-btn" onclick="handleAnswer(${i})">${ans}</button>`).join('');
+                document.getElementById('question-area').innerHTML = `<h3>ข้อที่ ${currentQ+1}</h3><p>${q.q}</p>${btns}`;
+            } else { showResult(); }
+        }
+
+        function handleAnswer(idx) {
+            if (idx === questions[currentQ].c) {
+                score += 20;
+                if(currentQ === 2) alert(questions[2].desc);
+            }
+            currentQ++;
+            document.getElementById('bar').style.width = (currentQ * 20) + '%';
+            loadNextQuestion();
+        }
+
+        function showResult() {
+            let msg = score >= 60 ? "ทะไมรุ้ ขี้โหง นิสัยม่ดีเบย ระกน้ะ เลิ้บยุ" : "ภารกิจม่สำเร็จหรอ เสียจุย ม่ระกกันแล้วก่บอก เสียจุยุยุย";
+            document.getElementById('question-area').innerHTML = `<h3>${score >= 60 ? 'ภารกิจสำเร็จ!' : 'ภารกิจเฟล'}</h3><p>${msg}</p><button class="choice-btn" onclick="transitionTo('scene-moon', 'scene-jupiter')">แตะเพื่อไปต่อ</button>`;
+        }
+
+        function transitionTo(oldS, newS) {
+            const ship = document.getElementById('main-ship');
+            ship.classList.replace('floating', 'shaking');
+            setTimeout(() => {
+                ship.classList.replace('shaking', 'launching');
+                setTimeout(() => {
+                    changeScene(oldS, newS);
+                    ship.classList.replace('launching', 'entering');
+                    setTimeout(() => { ship.classList.replace('entering', 'floating'); }, 1500);
+                }, 1400);
+            }, 800);
+        }
+
+        function handleJupiter() {
+            const imgs = ['love1.jpg', 'love2.jpg', 'love3.jpg', 'love4.jpg', 'love5.jpg'];
+            if (currentEvidence < 5) {
+                document.getElementById('jupiter-planet').style.display = 'none';
+                document.getElementById('evidence-display').src = imgs[currentEvidence];
+                document.getElementById('evidence-display').style.display = 'block';
+                document.getElementById('j-title').style.display = 'none';
+                document.getElementById('j-caption').innerText = `แตะเพื่อไปต่อ (${currentEvidence+1}/5)`;
+                document.getElementById('j-btn').innerText = 'ไปต่อ';
+                currentEvidence++;
+            } else {
+                document.getElementById('evidence-display').style.display = 'none';
+                document.getElementById('j-caption').innerHTML = `<span style="color:red;">⚠️ เราจะต้องรีบไปสำรวจดาวดวงอื่นกันแล้ว รีบขึ้นยานเร็ว</span>`;
+                document.getElementById('j-btn').innerText = 'แตะเพื่อขึ้นยาน';
+                document.getElementById('j-btn').onclick = () => transitionTo('scene-jupiter', 'scene-saturn');
+            }
+        }
+
+        function finalLaunch() {
+            const ship = document.getElementById('main-ship');
+            ship.classList.replace('floating', 'shaking');
+            setTimeout(() => {
+                ship.classList.replace('shaking', 'launching');
+                setTimeout(() => {
+                    changeScene('scene-saturn', 'scene-end');
+                    ship.classList.replace('launching', 'entering');
+                    const comet = document.getElementById('comet');
+                    setTimeout(() => { comet.classList.add('comet-active'); }, 1000);
+                }, 1400);
+            }, 800);
+        }
+
+        function changeScene(oldId, newId) {
+            document.getElementById(oldId).classList.remove('active');
+            document.getElementById(newId).classList.add('active');
+        }
+    </script>
+</body>
+</html>
+
